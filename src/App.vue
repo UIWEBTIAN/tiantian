@@ -11,23 +11,24 @@
                     <a target="_blank" href="#"></a>
                 </div>
                 <div id="menu" class="right-box">
-                    <span style="display: none;">
-                        <a href="" class="">登录</a>
+                    <span v-show="$store.state.isLogin == false" style="display: none;">
+                        <router-link to="/login">登录</router-link>
                         <strong>|</strong>
                         <a href="" class="">注册</a>
                         <strong>|</strong>
                     </span>
-                    <span>
-                        <a href="" class="">会员中心</a>
+                    <span v-show="$store.state.isLogin == true">
+                        <router-link to="/vipCenter">会员中心</router-link>
                         <strong>|</strong>
-                        <a>退出</a>
+                        <a @click="logout">退出</a>
                         <strong>|</strong>
                     </span>
-                    <a href="" class="">
+                    <router-link to="/buyCar">
                         <i class="iconfont icon-cart"></i>购物车(
                         <span id="shoppingCartCount">
-                            <span>4</span>
-                        </span>)</a>
+                            <span>{{ $store.getters.totalCount}}</span>
+                        </span>)
+                    </router-link>
                 </div>
             </div>
         </div>
@@ -125,6 +126,26 @@ export default {
   name: 'app',
   components: {
     // HelloWorld
+  },
+  methods:{
+      logout(){
+        //   调用接口
+        this.$axios.get('site/account/logout').then(result => {
+            console.log(result);
+            if(result.data.status === 0){
+                this.$Message.warning(result.data.message)
+                // 去首页
+                this.$router.push('/index')
+                // 修改 Vuex 的登录状态
+                this.$store.commit('changeLogin',false)
+            }
+            
+        })
+      }
+  },
+  created(){
+    //   console.log(this.$store);
+      
   }
 }
 </script>
