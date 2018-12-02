@@ -31,36 +31,49 @@
               <th width="10%">状态</th>
               <th width="12%">操作</th>
             </tr>
-            <tr>
-              <td>BD20171025213815752</td>
-              <td align="left">ivanyb1212</td>
+            <tr
+              v-for="(item) in orderMessage"
+              :key="item.id"
+            >
+              <td>{{ item.order_no }}</td>
+              <td align="left">{{ item.accept_name }}</td>
               <td align="left">
-                <strong style="color: red;">￥7220</strong>
+                <strong style="color: red;">￥{{ item.order_amount }}</strong>
                 <br> 在线支付
               </td>
-              <td align="left">2017-10-25 21:38:15</td>
+              <td align="left">{{ item.add_time | shortTime }} </td>
               <td align="left">
-                待付款
+                {{item.statusName}}
               </td>
               <td align="left">
-                <a
-                  href="#/site/member/orderinfo/12"
-                  class=""
-                >查看订单</a>
-                <br>
-                <a
-                  href="#/site/goods/payment/12"
-                  class=""
-                >|去付款</a>
-                <br>
+                <router-link :to="'/vipCenter/orderDetail/' + item.id">
+                  查看订单
+                </router-link>
+
+                <router-link
+                  v-show="item.status == 1"
+                  :to="'/payMoney/'+item.id"
+                >
+                  |去付款
+                </router-link>
+
                 <a href="javascript:void(0)">|取消</a>
-                <br>
               </td>
             </tr>
           </tbody>
         </table>
         <div class="page-foot">
-
+          <el-pagination
+            @size-change="pageSizeChange"
+            @current-change="pageIndexChange"
+            :current-page="pageIndex"
+            :page-sizes="[10,15,20,30]"
+            :page-size="100"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="totalCount"
+            background
+          >
+          </el-pagination>
         </div>
       </div>
     </div>
@@ -71,8 +84,72 @@
 export default {
   name: "orderList",
   data: function() {
-    return {};
+    return {
+      // 页码
+      pageIndex: 1,
+      // 页容量
+      pageSize: 10,
+      //   订单信息
+      orderMessage: [],
+      // 订单信息总条数
+      totalCount: 0
+    };
+  },
+  methods: {
+    //   初始化数据
+    initData() {
+      // 发起请求
+      this.$axios
+        .get(
+          `site/validate/order/userorderlist?pageIndex=${
+            this.pageIndex
+          }&pageSize=${this.pageSize}`
+        )
+        .then(result => {
+          //   console.log(result);
+          // 订单信息
+          this.orderMessage = result.data.message;
+          // 订单信息总条数
+          this.totalCount = result.data.totalcount;
+          //    console.log(this.totalCount);
+        });
+    },
+    //   每页条数
+    pageSizeChange(value) {
+    //   console.log(value);
+    //   保存数据
+    this.pageSize = value
+    // 充值到第一页,方便用户查看
+    this.pageIndex = 1;
+    //  调用接口
+    this.initData()
+    },
+    //   当前页
+    pageIndexChange(value) {
+    //   console.log(value);
+    // 保存数据
+    this.pageIndex = value;
+    // 调用接口
+    this.initData()
+    }
+  },
+  created() {
+    //   初始化数据
+      this.initData()
   }
 };
 </script>
+
+<style>
+td a {
+  display: block;
+}
+td:nth-child(2) {
+    height: 85px;
+}
+/* td:nth-child(2) {
+    line-height: 60px;
+} */
+</style>
+
 

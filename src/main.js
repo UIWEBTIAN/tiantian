@@ -27,8 +27,6 @@ Vue.use(iView);
 import ProductZoomer from "vue-product-zoomer";
 Vue.use(ProductZoomer);
 
-
-
 // 导入 axios
 // 类似于 vue-resources    this.$http
 import axios from "axios";
@@ -38,21 +36,29 @@ Vue.prototype.$axios = axios;
 // 使用axios的方式设置基础地址
 axios.defaults.baseURL = "http://111.230.232.110:8899/";
 // 设置带上cookie
-axios.defaults.withCredentials=true;//让ajax携带cookie
+axios.defaults.withCredentials = true; //让ajax携带cookie
 
 // 注册全局过滤器  方便使用
 // 导入 moment.js
 import moment from "moment";
-Vue.filter("shortTime",value => {
-    // console.log(value);
-      // 处理时间数据 
-      // 返回处理之后的数据
-      // 要显示什么 就返回什么
-      // console.log(moment(value).format('YYYY😘MM😘DD👍'));
-      //   return '😁😁😁😁😁😁';
-      return moment(value).format('YYYY😘MM😘DD👍');
+Vue.filter("shortTime", value => {
+  // console.log(value);
+  // 处理时间数据
+  // 返回处理之后的数据
+  // 要显示什么 就返回什么
+  // console.log(moment(value).format('YYYY😘MM😘DD👍'));
+  //   return '😁😁😁😁😁😁';
+  return moment(value).format("YYYY😘MM😘DD");
 });
-
+Vue.filter("detailTime", value => {
+  // console.log(value);
+  // 处理时间数据
+  // 返回处理之后的数据
+  // 要显示什么 就返回什么
+  // console.log(moment(value).format('YYYY😘MM😘DD👍'));
+  //   return '😁😁😁😁😁😁';
+  return moment(value).format("YYYY😘MM😘DD-h:mm:ss a");
+});
 
 // 导入 index 组件
 import index from "./components/index.vue";
@@ -63,13 +69,19 @@ import buyCar from "./components/buyCar.vue";
 // 导入 order 组件
 import order from "./components/order.vue";
 // 导入 login 组件
-import login from './components/login.vue';
+import login from "./components/login.vue";
 // 导入 payMony 组件
-import payMoney from './components/payMoney.vue';
+import payMoney from "./components/payMoney.vue";
 // 导入 paySuccess 组件
-import paySuccess from './components/paySuccess.vue';
+import paySuccess from "./components/paySuccess.vue";
 // 导入 vipCenter 组件
-import vipCenter from './components/vipCenter.vue';
+import vipCenter from "./components/vipCenter.vue";
+// 导入 orderList 组件
+import orderList from "./components/orderList.vue";
+// 导入 orderDetail 组件
+import orderDetail from "./components/orderDetail.vue";
+// 导入 orderIndex 组件
+import orderIndex from "./components/orderIndex.vue";
 
 // 为 false 控制台没有任何打印
 Vue.config.productionTip = false;
@@ -80,11 +92,41 @@ let routes = [
   { path: "/index", component: index },
   { path: "/detail/:artId", component: detail },
   { path: "/buyCar", component: buyCar },
-  { path: "/order/:selectedIds", component: order,meta: { requiresAuth: true } },
+  { path: "/order/:selectedIds",component: order, meta: { requiresAuth: true }},
   { path: "/login", component: login },
-  { path: "/payMoney/:orderid", component: payMoney, meta: { requiresAuth: true }},
-  { path: "/paySuccess", component: paySuccess, meta: { requiresAuth: true }},
-  { path: "/vipCenter", component: vipCenter, meta: { requiresAuth: true }},
+  { path: "/payMoney/:orderid",component: payMoney,meta: { requiresAuth: true }},
+  { path: "/paySuccess", component: paySuccess, meta: { requiresAuth: true } },
+  {
+    path: "/vipCenter",
+    component: vipCenter,
+    meta: { requiresAuth: true },
+    // 嵌套路由
+    children: [
+      {
+        path: "",
+        redirect: "orderIndex"  ,//重定向
+        meta: { requiresAuth: true }, 
+      },
+      {
+        // /vipCenter/orderIndex
+        path: "orderIndex",
+        component: orderIndex,
+        meta: { requiresAuth: true }, 
+      },
+      {
+        // /vipCenter/orderList
+        path: "orderList",
+        component: orderList,
+        meta: { requiresAuth: true,currentName:"交易订单" }, 
+      },
+      {
+        // /vipCenter/orderDetail
+        path: "orderDetail/:orderId",
+        component: orderDetail,
+        meta: { requiresAuth: true,currentNameTwo:"查看订单" }, 
+      },
+    ]
+  }
 ];
 
 // 实例化 路由 对象
@@ -94,23 +136,21 @@ let router = new VueRouter({
 
 // 增加导航守卫,回调函数(每次路由改变的时候,触发)
 router.beforeEach((to, from, next) => {
-  console.log(to);
+  // console.log(to);
   // console.log(from);
   // if (to.path.indexOf('/order') != -1) {
-    if(to.meta.requiresAuth == true ){
+  if (to.meta.requiresAuth == true) {
     // 正要去订单页
     // 必须先登录判断
-    axios.get('site/account/islogin').then(result => {
+    axios.get("site/account/islogin").then(result => {
       // console.log(result);
-      if(result.data.code == "nologin"){
-        
-        Vue.prototype.$Message.warning('请先登录');
-        router.push('/login')
-       
-      }else {
-        next()
+      if (result.data.code == "nologin") {
+        Vue.prototype.$Message.warning("请先登录");
+        router.push("/login");
+      } else {
+        next();
       }
-    })
+    });
   }
   next();
 });
@@ -126,7 +166,7 @@ const store = new Vuex.Store({
   state: {
     // count: 0
     cartData: JSON.parse(window.localStorage.getItem("tianTian")) || {},
-    isLogin:false
+    isLogin: false
   },
   // Vuex的计算属性
   getters: {
@@ -181,14 +221,14 @@ const store = new Vuex.Store({
     },
 
     // 删除数据
-    deleteGoodsById(state,id){
+    deleteGoodsById(state, id) {
       // 参数1 对象 参数2 删除的属性
       // 必须使用Vue.delete才可以同步更新视图
-      Vue.delete(state.cartData,id);
+      Vue.delete(state.cartData, id);
     },
     // 修改登录状态
-    changeLogin(state,isLogin){
-      state.isLogin = isLogin
+    changeLogin(state, isLogin) {
+      state.isLogin = isLogin;
     }
   }
 });
@@ -209,20 +249,19 @@ new Vue({
   },
   router,
   store,
-  created(){
+  created() {
     // console.log('噢噢噢');
     // 调用登录判断接口
     // 根据结果判断是否登录
-    axios.get('site/account/islogin').then(result => {
+    axios.get("site/account/islogin").then(result => {
       // console.log(result);
-      if(result.data.code == "nologin"){
+      if (result.data.code == "nologin") {
         // Vue.prototype.$Message.warning('请先登录');
         // router.push('/login')
-      }else {
+      } else {
         // 修改仓库中的状态
         store.state.isLogin = true;
       }
-    })
-    
+    });
   }
 }).$mount("#app"); // 挂载到 #app 这个dom元素上

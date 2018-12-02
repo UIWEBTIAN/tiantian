@@ -160,12 +160,11 @@
                 class="button"
                 onclick="javascript:location.href='/index.html';"
               >继续购物</button>
-              <router-link :to="'/order/'+ selectedIds">
                 <button
                   class="submit"
-                  onclick="formSubmit(this, '/', '/shopping.html');"
+                  @click="toOrder"
                 >立即结算</button>
-              </router-link>
+
             </div>
           </div>
           <!--购物车底部-->
@@ -211,6 +210,17 @@ export default {
             message: "已取消删除"
           });
         });
+    },
+    // 去结算页
+    toOrder(){
+      // 如果没有选中商品 无法跳转
+        if(this.selectedCount==0){
+            // 提示用户
+            this.$message.warning('哥们,没东西咋提交呀!买点呗 (* ￣3)(ε￣ *)');
+        }else{
+            // 编程式导航
+            this.$router.push('/order/'+this.selectedIds)
+        }
     }
   },
   //   计算属性
